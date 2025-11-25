@@ -48,3 +48,26 @@ jobs:
         run: dotnet build
       - name: Run
         run: dotnet run
+        
+  build-windows:
+    runs-on: windows-latest
+    
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install PostgreSQL
+        uses: ikalnytskyi/action-setup-postgres@v8
+        with:
+          username: postgres
+          password: localDevPassword
+          database: test
+          postgres-version: "16"
+        id: postgres
+      - name: Create DB
+        run: psql --echo-all --dbname test --file db/createDBCommands.sql
+        env:
+          PGSERVICE: ${{ steps.postgres.outputs.service-name }}
+      - name: Build in Debug mode
+        run: dotnet build
+      - name: Run
+        run: dotnet run        
