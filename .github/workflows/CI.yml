@@ -25,3 +25,26 @@ jobs:
         run: dotnet build
       - name: Run
         run: dotnet run
+        
+  build-macos:
+    runs-on: macos-latest
+    
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create DB
+        run: |
+          brew install postgresql@16
+
+          # NOTE: if the below command doesn't seem to launch pg service on your MacBook, try this instead: pg_ctl -D /usr/local/var/postgres start
+          brew services restart postgresql@16
+
+          brew link postgresql@16 --force
+          /opt/homebrew/opt/postgresql@16/bin/createuser --superuser postgres
+          /opt/homebrew/opt/postgresql@16/bin/createdb test
+          /opt/homebrew/opt/postgresql@16/bin/psql --echo-all --dbname test --file db/createDBCommands.sql
+          /opt/homebrew/opt/postgresql@16/bin/psql --echo-all --dbname postgres --command "ALTER USER postgres WITH PASSWORD 'localDevPassword';"
+      - name: Build in Debug mode
+        run: dotnet build
+      - name: Run
+        run: dotnet run
