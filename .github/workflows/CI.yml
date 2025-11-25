@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  [
+    push,
+    pull_request,
+    workflow_dispatch
+  ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create DB
+        run: |
+          sudo DEBIAN_FRONTEND=noninteractive apt install postgresql --yes
+          sudo service postgresql start
+          sudo -u postgres createdb test
+          sudo -u postgres psql --echo-all --dbname test --file db/createDBCommands.sql
+          sudo -u postgres psql --echo-all --dbname postgres --command "ALTER USER postgres WITH PASSWORD 'localDevPassword';"
+      - name: Build in Debug mode
+        run: dotnet build
+      - name: Run
+        run: dotnet run
